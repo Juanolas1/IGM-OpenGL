@@ -22,8 +22,10 @@ void glfw_window_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 void render(double);
 
+GLuint shader_program_texture = 0; // Shader para la textura
 GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
+GLuint texture;
 GLint mv_location, proj_location; // Uniforms for transformation matrices
 
 int main() {
@@ -112,6 +114,53 @@ int main() {
   glDeleteShader(vs);
   glDeleteShader(fs);
 
+const char* vertex_shader_texture =
+    "#version 130\n"
+
+    "in vec4 v_pos;"
+    "in vec2 v_texCoord;"
+    
+    "out vec2 texCoord;"
+    "out vec4 pos;"
+    
+    "uniform mat4 mv_matrix;"
+    "uniform mat4 proj_matrix;"
+
+    "void main() {"
+    "  gl_Position = proj_matrix * mv_matrix * v_pos;"
+    "  texCoord = v_texCoord;\n"
+    "}";
+
+  // Fragment Shader
+  const char* fragment_shader_texture =
+    "#version 130\n"
+    "in vec2 texCoord;"
+    
+    "out vec4 frag_col;"
+
+    "uniform sampler2D tex;"
+
+    "void main() {"
+    "  frag_col = texture(tex, texCoord);"
+    "}";
+
+  // Shaders compilation
+  GLuint vs_texture = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vs_texture, 1, &vertex_shader_texture, NULL);
+  glCompileShader(vs_texture);
+  GLuint fs_texture = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fs_texture, 1, &fragment_shader_texture, NULL);
+  glCompileShader(fs_texture);
+
+  // Create program, attach shaders to it and link it
+  shader_program_texture = glCreateProgram();
+  glAttachShader(shader_program_texture, vs_texture);
+  glAttachShader(shader_program_texture, fs_texture);
+  glLinkProgram(shader_program_texture);
+
+  // Release shader objects
+  glDeleteShader(vs_texture);
+  glDeleteShader(vs_texture);
   // Vertex Array Object
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
